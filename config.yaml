@@ -85,7 +85,7 @@ event_forecast:
     "18": 5.71
 
 model_training:
-  models: ["logistic", "random_forest", "extra_trees", "hist_gbm", "xgboost", "lightgbm", "catboost"]
+  models: ["logistic", "random_forest", "extra_trees", "hist_gbm", "xgboost", "lightgbm"]
   test_fraction: 0.2
   target_epsilon: 0.05
   target_epsilon_grid: [0.03, 0.05, 0.08]
@@ -96,7 +96,7 @@ model_training:
     - {down: 1.0, flat: 1.0, up: 1.05}
     - {down: 0.95, flat: 1.0, up: 1.0}
     - {down: 1.0, flat: 1.0, up: 0.95}
-  walk_forward_splits: 4
+  walk_forward_splits: 3
   walk_forward_min_train_windows: 6
   max_lag: 4
   calibrate_probabilities: true
