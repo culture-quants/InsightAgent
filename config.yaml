@@ -1,6 +1,6 @@
 input:
-  embeddings: "embeddings.npy"
-  data: "clustered_data_labeled.csv"
+  embeddings: "../../embeddings.npy"
+  data: "../../clustered_data_labeled.csv"
   text_column: "text"
   timestamp_column: "timestamp"
 
