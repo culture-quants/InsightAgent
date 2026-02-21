@@ -1,0 +1,10 @@
+numpy
+pandas
+pyarrow
+hdbscan
+umap-learn
+scikit-learn
+plotly
+tqdm
+pyyaml
+anthropic
