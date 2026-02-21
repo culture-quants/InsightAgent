@@ -1,0 +1,92 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 220 14% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 14% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 14% 10%;
+    --primary: 220 14% 10%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 10% 96%;
+    --secondary-foreground: 220 14% 10%;
+    --muted: 220 10% 96%;
+    --muted-foreground: 220 8% 46%;
+    --accent: 220 10% 94%;
+    --accent-foreground: 220 14% 10%;
+    --destructive: 0 60% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 8% 90%;
+    --input: 220 8% 90%;
+    --ring: 220 14% 10%;
+    --radius: 0.375rem;
+
+    --sidebar-background: 220 10% 98%;
+    --sidebar-foreground: 220 8% 46%;
+    --sidebar-primary: 220 14% 10%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 10% 94%;
+    --sidebar-accent-foreground: 220 14% 10%;
+    --sidebar-border: 220 8% 92%;
+    --sidebar-ring: 220 14% 10%;
+
+    /* Data viz — desaturated, functional */
+    --viz-cyan: 200 30% 45%;
+    --viz-emerald: 152 28% 40%;
+    --viz-rose: 0 40% 50%;
+    --viz-amber: 30 35% 46%;
+    --viz-violet: 255 18% 50%;
+    --viz-blue: 215 30% 48%;
+
+    /* Status colors */
+    --status-emerging: 210 30% 48%;
+    --status-trending: 152 28% 40%;
+    --status-stable: 215 25% 50%;
+    --status-declining: 30 35% 46%;
+    --status-dormant: 220 6% 55%;
+
+    /* Prediction colors */
+    --direction-up: 152 28% 40%;
+    --direction-down: 0 40% 50%;
+    --direction-flat: 30 35% 46%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+@layer utilities {
+  .font-mono-data {
+    font-family: 'JetBrains Mono', monospace;
+    font-feature-settings: 'tnum';
+  }
+
+  .glass-card {
+    @apply bg-card border border-border rounded-md;
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted)) transparent;
+  }
+
+  .grid-texture {
+    background-image: none;
+  }
+}

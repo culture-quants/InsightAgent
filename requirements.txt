@@ -8,3 +8,7 @@ plotly
 tqdm
 pyyaml
 anthropic
+fastapi
+uvicorn[standard]
+python-dotenv
+google-genai

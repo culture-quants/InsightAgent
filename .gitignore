@@ -8,3 +8,7 @@ output/
 clustered_data_labeled.csv
 embeddings.npy
 catboost_info/
+
+# Frontend build artifacts
+frontend/node_modules/
+frontend/dist/

@@ -132,6 +132,54 @@ Edit `config.yaml` to adjust:
 - `model_training.calibrate_probabilities` — probability calibration toggle
 - `event_forecast.risk_band_quantiles` — risk bucket thresholds
 
+## Frontend + API Server
+
+The interactive dashboard connects to a FastAPI backend that wraps the pipeline.
+
+### Quick Start
+
+```bash
+# Terminal 1: Start the API server
+pip install -r requirements.txt
+python server.py
+# → runs on http://localhost:8000
+
+# Terminal 2: Start the frontend dev server
+cd frontend
+npm install
+npm run dev
+# → runs on http://localhost:8080
+```
+
+The frontend proxies `/api/*` requests to the backend automatically.
+
+### Chat Feature
+
+The **News Impact Chat** page (`/news-chat`) provides:
+
+1. Enter a news event or headline
+2. The backend runs the full prediction pipeline (theme scoring + trained model inference)
+3. Gemini LLM generates a detailed trend analysis
+4. Interactive charts show historical trends for activated clusters
+5. Detailed statistics tables show theme weights, volatility, and momentum
+
+Requires `GOOGLE_API_KEY` in `.env` for Gemini analysis.
+
+### API Endpoints
+
+| Endpoint | Method | Description |
+|---|---|---|
+| `/api/health` | GET | Server status |
+| `/api/predict` | POST | Run event prediction pipeline |
+| `/api/chat` | POST | Gemini LLM analysis of prediction |
+| `/api/clusters` | GET | Current cluster data |
+| `/api/snapshots` | GET | Monthly trend snapshots |
+| `/api/kpis` | GET | Dashboard KPIs |
+| `/api/lifecycle-distribution` | GET | Lifecycle state counts |
+| `/api/temporal-events` | GET | Detected anomaly events |
+| `/api/model-metrics` | GET | Model evaluation metrics |
+| `/api/themes` | GET | Theme lexicon list |
+
 ## Data Files and Git
 
 Large local artifacts are intentionally excluded from version control using `.gitignore`,
