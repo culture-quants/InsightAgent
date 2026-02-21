@@ -92,6 +92,17 @@ Outputs:
 - `output/models/direction_model.pkl`
 - `output/models/direction_model_metrics.json`
 
+Latest backtest snapshot (from `output/models/direction_model_metrics.json`):
+- `random_forest` accuracy: **0.8038** (best)
+- `hist_gbm` accuracy: **0.8014**
+- `soft_voting_ensemble` accuracy: **0.7943**
+- `lightgbm` accuracy: **0.7919**
+- `xgboost` accuracy: **0.7871**
+
+What this means in plain language: the best model (`random_forest`) gets the
+direction label right about 80.38% of the time on the held-out test set
+(`down` / `flat` / `up`), or roughly 336 correct predictions out of 418.
+
 ### 6b. Forecast Dashboard
 
 Generate a standalone HTML dashboard for the latest forecast output.
