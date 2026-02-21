@@ -2,3 +2,9 @@
 __pycache__/
 *.pyc
 output/
+.env
+
+# Local data artifacts (large; keep out of git)
+clustered_data_labeled.csv
+embeddings.npy
+catboost_info/

@@ -1,0 +1,196 @@
+themes:
+  - id: 0
+    name: "DeepMind General Conversation"
+    description: "General mentions of DeepMind, team updates, podcasts, and broad AI discussion."
+    keywords: [deepmind, google deepmind, demis hassabis, deepmind team, ai research]
+    synonyms: [googledeepmind, deepmind lab, deepmind updates]
+    phrases: [deepmind work, deepmind podcast, deepmind research team]
+
+  - id: 1
+    name: "Weather Forecasting AI"
+    description: "AI weather models, forecasting quality, and climate-related prediction tools."
+    keywords: [weather ai, weather forecasting, graphcast, forecast model, hurricane prediction]
+    synonyms: [met forecasting ai, climate prediction model, weather model]
+    phrases: [ai weather forecast, deepmind weather model, next day forecast]
+
+  - id: 2
+    name: "Google DeepMind Leadership and Strategy"
+    description: "CEO/founder commentary, strategy signals, and competition with other labs."
+    keywords: [google deepmind, deepmind ceo, demis hassabis, ai strategy, ai lab]
+    synonyms: [deepmind leadership, alphabet ai strategy, research leadership]
+    phrases: [ceo said, deepmind founder, google ai strategy]
+
+  - id: 3
+    name: "AI Consciousness and Personhood"
+    description: "Debates on AI rights, sentience, moral status, and consciousness frameworks."
+    keywords: [ai rights, personhood, ai consciousness, qualia, moral status]
+    synonyms: [machine consciousness, legal personhood, sentience debate]
+    phrases: [rights for ai, conscious ai systems, moral consideration for ai]
+
+  - id: 4
+    name: "Protein Folding and Drug Discovery"
+    description: "AlphaFold and protein structure applications in biology and medicine."
+    keywords: [alphafold, protein folding, protein structure, drug discovery, computational biology]
+    synonyms: [structural biology ai, protein modeling, biology foundation model]
+    phrases: [predict protein structure, ai for drug discovery, protein folding breakthrough]
+
+  - id: 5
+    name: "AI Industry Competition"
+    description: "Discussion of major AI companies, leaders, and competitive positioning."
+    keywords: [openai, google, anthropic, xai, ai market]
+    synonyms: [ai race, frontier labs, model providers]
+    phrases: [ai industry leaders, competition between labs, frontier model race]
+
+  - id: 6
+    name: "AI Learning and Intelligence"
+    description: "General learning-centric AI discourse, model capability growth, and human-like learning."
+    keywords: [artificial intelligence, learning systems, deepmind ai, model learning, intelligence]
+    synonyms: [machine learning systems, ai capability growth, cognitive ai]
+    phrases: [ai can learn, human level intelligence, learning based models]
+
+  - id: 7
+    name: "DeepMind Core Research"
+    description: "Research papers, RL work, methods, and technical outputs from DeepMind."
+    keywords: [deepmind research, reinforcement learning, research paper, neural models, deepmindai]
+    synonyms: [lab research output, rl research, technical publication]
+    phrases: [new deepmind paper, reinforcement learning work, published research]
+
+  - id: 8
+    name: "AI for Mathematics and Olympiad Problems"
+    description: "Math reasoning systems including AlphaGeometry and olympiad-level performance."
+    keywords: [alphageometry, math reasoning, olympiad, imo problems, theorem solving]
+    synonyms: [mathematical reasoning ai, geometry solver, olympiad ai]
+    phrases: [solve olympiad problems, ai at imo level, mathematical proof tasks]
+
+  - id: 9
+    name: "Gemini Models and Product Discussion"
+    description: "Gemini model capabilities, releases, and comparisons to other LLMs."
+    keywords: [gemini, gemini model, llms, reasoning model, language model]
+    synonyms: [google gemini, multimodal model, foundation model]
+    phrases: [new gemini release, gemini versus chatgpt, gemini reasoning]
+
+  - id: 10
+    name: "AlphaFold and Advanced Science Stack"
+    description: "Cross-domain scientific stack around AlphaFold, biotech, and adjacent deep tech."
+    keywords: [alphafold, protein, quantum, scientific models, deepmind science]
+    synonyms: [science ai stack, biotech ai, research tooling]
+    phrases: [science with ai, alphafold research, model driven science]
+
+  - id: 11
+    name: "NHS Data Governance and Privacy"
+    description: "NHS data-sharing controversy, legality, governance, and patient privacy."
+    keywords: [nhs data, data deal, patient data, deepmind nhs, healthcare privacy]
+    synonyms: [health data governance, data sharing controversy, medical data ethics]
+    phrases: [nhs data deal, legally inappropriate use, patient data access]
+
+  - id: 12
+    name: "OpenLedger and Decentralized AI"
+    description: "OpenLedgerHQ, decentralized AI infra, web3-oriented model ecosystems."
+    keywords: [openledger, decentralized ai, web3 ai, open models, ai agents]
+    synonyms: [distributed ai network, blockchain ai stack, decentralized infra]
+    phrases: [openledger ecosystem, decentralized model network, web3 ai projects]
+
+  - id: 13
+    name: "Gemini Robotics and Embodied AI"
+    description: "Robotics progress, embodied agents, and Gemini-driven robotic capabilities."
+    keywords: [gemini robotics, robotics ai, embodied ai, robot tasks, humanoid robots]
+    synonyms: [robot foundation model, embodied intelligence, robotic agents]
+    phrases: [robots doing tasks, real world robotics, embodied model control]
+
+  - id: 14
+    name: "AI Race Among Big Tech"
+    description: "Competitive framing across Google, OpenAI, Meta, Microsoft, and others."
+    keywords: [ai race, big tech ai, openai google, anthropic, microsoft ai]
+    synonyms: [frontier ai competition, model race, platform competition]
+    phrases: [who is leading ai, competition in ai, battle between ai labs]
+
+  - id: 15
+    name: "Google DeepMind Brand Core"
+    description: "High-volume broad mentions of Google DeepMind and organizational narrative."
+    keywords: [google deepmind, deepmind ai, agi, artificial intelligence, research]
+    synonyms: [google ai lab, deepmind organization, deepmind brand]
+    phrases: [google deepmind news, deepmind updates, deepmind and agi]
+
+  - id: 16
+    name: "Sentient AGI and Open Agents"
+    description: "Open-source AGI conversations, agent systems, and sentience-related discourse."
+    keywords: [sentient agi, open source ai, ai agents, agent systems, general intelligence]
+    synonyms: [open agi, autonomous agents, community ai research]
+    phrases: [open source agi, sentient style systems, multi agent intelligence]
+
+  - id: 17
+    name: "xAI Team and Founding Narrative"
+    description: "xAI personnel, founder stories, and links to ex-OpenAI/DeepMind talent."
+    keywords: [xai team, elon musk, grok, igor babuschkin, ex openai]
+    synonyms: [xai founding team, musk ai company, xai talent]
+    phrases: [founded by elon musk, ex deepmind openai, xai team members]
+
+  - id: 18
+    name: "AlphaFold Scientific Impact"
+    description: "AlphaFold-specific scientific outcomes, protein structures, and biology relevance."
+    keywords: [alphafold, protein structure, proteins, biology, deepmind alphafold]
+    synonyms: [protein structure prediction, molecular biology ai, structure modeling]
+    phrases: [alphafold model, predict structures, protein science breakthrough]
+
+  - id: 19
+    name: "AI in Healthcare Delivery"
+    description: "Healthcare use-cases, diagnosis support, eye disease analysis, and clinical AI."
+    keywords: [healthcare ai, deepmind health, eye diseases, doctors, clinical care]
+    synonyms: [medical ai systems, hospital ai tools, diagnostic ai]
+    phrases: [ai in healthcare, support for doctors, health care ai]
+
+  - id: 20
+    name: "AI Builders Forum and Community"
+    description: "Builder programs, forums, and practical collaboration around AI development."
+    keywords: [ai builders forum, builders, developer community, join forum, ai community]
+    synonyms: [builder network, practitioner community, developer forum]
+    phrases: [join the forum, ai builders program, builders community]
+
+  - id: 21
+    name: "Generative Media Models"
+    description: "Video/image/world models such as Genie and Veo, with interactive generation."
+    keywords: [genie, veo, video model, world model, multimodal generation]
+    synonyms: [generative video ai, simulation models, interactive generation]
+    phrases: [text to video model, generate interactive worlds, world model demo]
+
+  - id: 22
+    name: "AI Safety and Existential Risk"
+    description: "AGI risk framing, alignment concerns, and long-run safety debate."
+    keywords: [ai safety, existential risk, agi risk, alignment, catastrophic risk]
+    synonyms: [x risk, long term safety, ai governance risk]
+    phrases: [risks from agi, safety concerns, alignment problem]
+
+  - id: 23
+    name: "DeepMind Careers and Opportunities"
+    description: "Hiring, scholarships, research scientist roles, and talent pipeline."
+    keywords: [deepmind jobs, research scientist, scholarship, hiring, join deepmind]
+    synonyms: [career opportunities, lab recruitment, fellowship applications]
+    phrases: [apply now, join our team, research roles]
+
+  - id: 24
+    name: "Scientific and Societal Impact Narrative"
+    description: "Broad claims of impact in science and society driven by AI progress."
+    keywords: [scientific impact, huge impact, science progress, ai impact, research impact]
+    synonyms: [societal impact, scientific breakthrough, transformative effects]
+    phrases: [huge impact on science, impact of ai, science driven progress]
+
+  - id: 25
+    name: "ML Ecosystem and Influencer Amplification"
+    description: "Machine learning hashtag ecosystem and broad amplification by tech accounts."
+    keywords: [machinelearning, deeplearning, datascience, bigdata, artificialintelligence]
+    synonyms: [ml ecosystem, ai hashtag stream, tech amplification]
+    phrases: [machinelearning deeplearning, ai thought leaders, data science posts]
+
+  - id: 26
+    name: "AGI Timelines and Forecasts"
+    description: "Predictions about AGI arrival, timelines, and expectations by major labs."
+    keywords: [agi timelines, agi predictions, 2025 ai, frontier models, capability forecasts]
+    synonyms: [arrival forecasts, timeline debate, agi expectations]
+    phrases: [when agi happens, agi by year, timeline predictions]
+
+  - id: 27
+    name: "Game-Playing Superhuman AI"
+    description: "AlphaGo/AlphaZero/StarCraft breakthroughs and game benchmark achievements."
+    keywords: [alphago, alphazero, starcraft ii, game playing ai, chess ai]
+    synonyms: [superhuman game ai, strategic gameplay models, benchmark games]
+    phrases: [beat human players, game benchmark performance, starcraft agent]

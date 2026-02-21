@@ -1,20 +1,30 @@
+# Optional: cap cores (e.g. 4 = use 4 P-cores only on 4P+4E machines; omit or set to 0 to use all)
+max_cores: 0
+
 input:
-  embeddings: "../../embeddings.npy"
-  data: "../../clustered_data_labeled.csv"
+  embeddings: "embeddings.npy"
+  data: "clustered_data_labeled.csv"
   text_column: "text"
   timestamp_column: "timestamp"
+
+# Optional: reduce embedding dims before HDBSCAN (much faster; 3072 -> n_components)
+pca:
+  enabled: true
+  n_components: 128
 
 clustering:
   algorithm: "hdbscan"
   min_cluster_size: 50
   min_samples: 10
   target_clusters: 50
+  n_jobs: -1   # -1 = all cores for HDBSCAN core distance
 
 umap:
   n_components: 2
   n_neighbors: 15
   min_dist: 0.1
   metric: "cosine"
+  # parallelism via NUMBA_NUM_THREADS (set by script = all cores)
 
 temporal:
   default_window: "1M"
@@ -24,10 +34,72 @@ output:
   clusters: "output/clusters.parquet"
   temporal_stats: "output/temporal_stats.parquet"
   temporal_events: "output/temporal_events.parquet"
+  cluster_trend_snapshots_1m: "output/cluster_trend_snapshots_1M.parquet"
+  cluster_trend_snapshots_1m_csv: "output/cluster_trend_snapshots_1M.csv"
   viz_dir: "output/visualizations"
 
 llm:
-  enabled: false
-  provider: "anthropic"
-  model: "claude-sonnet-4-6"
+  enabled: true
+  provider: "google"
+  model: "gemini-2.5-flash"
   sample_size: 20
+  semantic_top_k: 10
+  semantic_blend_alpha: 0.35
+
+# Non-LLM semantic baseline: theme lexicon + TF-IDF activation
+theme_activation:
+  mode: "windows"                  # windows | events
+  theme_lexicon: "theme_lexicon.yaml"
+  output: "output/theme_activations.parquet"
+  n_jobs: 8
+  global_threshold: 0.03
+  per_theme_threshold: {}          # Optional: {"1": 0.025, "2": 0.04}
+  preprocessing:
+    stem: false                    # Optional: requires nltk for Porter stemming
+    min_parallel_docs: 2000
+  tfidf:
+    min_df: 2
+    max_df: 0.9
+    max_features: 50000
+    ngram_range: [1, 2]
+
+event_forecast:
+  cluster_db_output: "output/cluster_state_database.parquet"
+  prediction_output: "output/event_direction_prediction.json"
+  dashboard_output: "output/visualizations/forecast_dashboard.html"
+  activation_threshold: 4.0
+  target_epsilon: 0.05
+  risk_band_quantiles:
+    low: 0.33
+    high: 0.66
+  # Optional stricter thresholds for broad/high-frequency themes.
+  per_theme_threshold:
+    "0": 9.0
+    "2": 9.0
+    "6": 8.23
+    "7": 5.48
+    "10": 5.98
+    "14": 8.29
+    "15": 9.0
+    "17": 7.77
+    "18": 5.71
+
+model_training:
+  models: ["logistic", "random_forest", "extra_trees", "hist_gbm", "xgboost", "lightgbm", "catboost"]
+  test_fraction: 0.2
+  target_epsilon: 0.05
+  target_epsilon_grid: [0.03, 0.05, 0.08]
+  class_threshold_candidates:
+    - {down: 1.0, flat: 1.0, up: 1.0}
+    - {down: 1.05, flat: 1.0, up: 1.0}
+    - {down: 1.0, flat: 1.05, up: 1.0}
+    - {down: 1.0, flat: 1.0, up: 1.05}
+    - {down: 0.95, flat: 1.0, up: 1.0}
+    - {down: 1.0, flat: 1.0, up: 0.95}
+  walk_forward_splits: 4
+  walk_forward_min_train_windows: 6
+  max_lag: 4
+  calibrate_probabilities: true
+  random_state: 42
+  output_model_path: "output/models/direction_model.pkl"
+  output_metrics_path: "output/models/direction_model_metrics.json"

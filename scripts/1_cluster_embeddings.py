@@ -5,11 +5,28 @@ Script 1: Cluster Embeddings
 - Generates UMAP 2D coordinates
 - Creates TF-IDF cluster labels
 - Saves output/clusters.parquet
+Uses multiple cores for HDBSCAN and UMAP when configured.
 """
 
 import argparse
 import os
 import sys
+
+# Use all CPUs for Numba (UMAP); set before importing umap
+def _cpu_count():
+    """Number of available CPUs (respects cgroups/affinity on Linux)."""
+    try:
+        return len(os.sched_getaffinity(0))
+    except AttributeError:
+        return os.cpu_count() or 1
+
+
+def _set_numba_threads(n=None):
+    if n is None:
+        n = _cpu_count()
+    n = max(1, n)
+    os.environ.setdefault("NUMBA_NUM_THREADS", str(n))
+    return n
 
 import numpy as np
 import pandas as pd
@@ -22,15 +39,16 @@ def load_config(config_path):
         return yaml.safe_load(f)
 
 
-def validate_inputs(embeddings_path, data_path, config):
+def validate_inputs(embeddings_path, data_path, config, pbar=None):
     if not os.path.exists(embeddings_path):
         raise FileNotFoundError(f"Embeddings not found: {embeddings_path}")
     if not os.path.exists(data_path):
         raise FileNotFoundError(f"Data not found: {data_path}")
 
-    print("Loading data for validation...")
+    if pbar:
+        pbar.set_description("Loading embeddings & CSV")
     embeddings = np.load(embeddings_path)
-    data = pd.read_csv(data_path)
+    data = pd.read_csv(data_path, low_memory=False)
 
     if len(embeddings) != len(data):
         raise ValueError(f"Mismatch: {len(embeddings)} embeddings vs {len(data)} rows")
@@ -48,15 +66,34 @@ def validate_inputs(embeddings_path, data_path, config):
     return embeddings, data
 
 
-def generate_cluster_labels(df, text_column, n_top_terms=3):
+def reduce_embeddings(embeddings, config, pbar=None):
+    """Optionally reduce embedding dims with PCA before clustering (faster HDBSCAN)."""
+    pca_cfg = config.get('pca') or {}
+    if not pca_cfg.get('enabled', False):
+        return embeddings
+    if pbar:
+        pbar.set_description("PCA reduction")
+    from sklearn.decomposition import PCA
+    n = pca_cfg.get('n_components', 128)
+    n = min(n, embeddings.shape[0], embeddings.shape[1])
+    pca = PCA(n_components=n, random_state=42)
+    reduced = pca.fit_transform(embeddings)
+    var = pca.explained_variance_ratio_.sum()
+    if pbar:
+        pbar.set_postfix_str(f"retained {100*var:.1f}% variance")
+    return reduced.astype(np.float32)
+
+
+def generate_cluster_labels(df, text_column, n_top_terms=3, pbar=None):
     """Generate TF-IDF keyword labels per cluster."""
     from sklearn.feature_extraction.text import TfidfVectorizer
 
     labels = {}
     unique_clusters = sorted(df['cluster'].unique())
+    if pbar:
+        pbar.set_description("TF-IDF cluster labels")
 
-    print("Generating cluster labels via TF-IDF...")
-    for cluster_id in tqdm(unique_clusters):
+    for cluster_id in tqdm(unique_clusters, desc="Cluster labels", leave=False):
         if cluster_id == -1:
             labels[-1] = "Uncategorized/Noise"
             continue
@@ -80,32 +117,43 @@ def generate_cluster_labels(df, text_column, n_top_terms=3):
     return labels
 
 
-def run_clustering(embeddings, config):
+def run_clustering(embeddings, config, pbar=None):
     import hdbscan
     import umap
 
-    print(f"Running HDBSCAN on {len(embeddings)} embeddings...")
+    n_jobs = config.get('clustering', {}).get('n_jobs', -1)
+
+    if pbar:
+        pbar.set_description("HDBSCAN clustering")
     clusterer = hdbscan.HDBSCAN(
         min_cluster_size=config['clustering']['min_cluster_size'],
         min_samples=config['clustering']['min_samples'],
         metric='euclidean',
-        cluster_selection_method='eom'
+        cluster_selection_method='eom',
+        core_dist_n_jobs=n_jobs,
     )
     cluster_labels = clusterer.fit_predict(embeddings)
 
     n_clusters = len(set(cluster_labels)) - (1 if -1 in cluster_labels else 0)
     n_noise = (cluster_labels == -1).sum()
-    print(f"Found {n_clusters} clusters, {n_noise} noise points ({100*n_noise/len(cluster_labels):.1f}%)")
+    if pbar:
+        pbar.set_postfix_str(f"{n_clusters} clusters, {100*n_noise/len(cluster_labels):.1f}% noise")
+        pbar.update(1)
 
-    print("Running UMAP dimensionality reduction...")
+    # UMAP uses Numba; NUMBA_NUM_THREADS (set at startup) uses all cores
+    if pbar:
+        pbar.set_description("UMAP 2D reduction")
+        pbar.set_postfix_str("")
     reducer = umap.UMAP(
         n_components=config['umap']['n_components'],
         n_neighbors=config['umap']['n_neighbors'],
         min_dist=config['umap']['min_dist'],
         metric=config['umap']['metric'],
-        verbose=True
+        verbose=False,
     )
     umap_coords = reducer.fit_transform(embeddings)
+    if pbar:
+        pbar.update(1)
 
     return cluster_labels, umap_coords
 
@@ -116,36 +164,84 @@ def main():
     parser.add_argument('--force', action='store_true', help='Rerun even if output exists')
     args = parser.parse_args()
 
-    config = load_config(args.config)
-    output_path = config['output']['clusters']
+    config_path = os.path.abspath(args.config)
+    config = load_config(config_path)
+    # Resolve paths relative to config file's directory (repo root when config is in root)
+    config_dir = os.path.dirname(config_path)
+    def resolve(path):
+        return path if os.path.isabs(path) else os.path.join(config_dir, path)
+    embeddings_path = resolve(config['input']['embeddings'])
+    data_path = resolve(config['input']['data'])
+    output_path = resolve(config['output']['clusters'])
 
     if os.path.exists(output_path) and not args.force:
         print(f"Output already exists: {output_path} (use --force to rerun)")
         sys.exit(0)
 
-    embeddings, data = validate_inputs(
-        config['input']['embeddings'],
-        config['input']['data'],
-        config
-    )
+    n_cores = _cpu_count()
+    max_cores = config.get('max_cores') or 0
+    effective_cores = min(n_cores, max_cores) if max_cores else n_cores
+    if max_cores:
+        os.environ["NUMBA_NUM_THREADS"] = str(effective_cores)
+    n_jobs_cfg = config.get('clustering', {}).get('n_jobs', -1)
+    n_jobs_effective = effective_cores if n_jobs_cfg == -1 else max(1, min(n_jobs_cfg, effective_cores))
+    numba_threads = os.environ.get("NUMBA_NUM_THREADS", str(effective_cores))
+    print(f"Cores: {n_cores} available, using {effective_cores} (max_cores={max_cores or 'all'}) | HDBSCAN: {n_jobs_effective} job(s) | UMAP (Numba): {numba_threads} thread(s)")
 
-    cluster_labels, umap_coords = run_clustering(embeddings, config)
+    # Overall progress: Load -> [PCA] -> HDBSCAN -> UMAP -> Labels -> Save (5 or 6 steps)
+    n_steps = 6 if config.get('pca', {}).get('enabled', False) else 5
 
-    data['cluster'] = cluster_labels
-    data['umap_x'] = umap_coords[:, 0]
-    data['umap_y'] = umap_coords[:, 1]
+    with tqdm(total=n_steps, desc="Pipeline", unit="step", dynamic_ncols=True) as pbar:
+        embeddings, data = validate_inputs(embeddings_path, data_path, config, pbar=pbar)
+        pbar.update(1)
 
-    text_col = config['input']['text_column']
-    cluster_label_map = generate_cluster_labels(data, text_col)
-    data['cluster_label'] = data['cluster'].map(cluster_label_map)
+        embeddings_for_clustering = reduce_embeddings(embeddings, config, pbar=pbar)
+        if config.get('pca', {}).get('enabled', False):
+            pbar.update(1)
 
-    cluster_sizes = data['cluster'].value_counts()
-    data['cluster_size'] = data['cluster'].map(cluster_sizes)
+        cluster_labels, umap_coords = run_clustering(embeddings_for_clustering, config, pbar=pbar)
 
-    os.makedirs(config['output']['dir'], exist_ok=True)
-    data.to_parquet(output_path, index=False)
+        data['cluster'] = cluster_labels
+        data['umap_x'] = umap_coords[:, 0]
+        data['umap_y'] = umap_coords[:, 1]
+
+        text_col = config['input']['text_column']
+        cluster_label_map = generate_cluster_labels(data, text_col, pbar=pbar)
+        data['cluster_label'] = data['cluster'].map(cluster_label_map)
+        pbar.update(1)
+
+        pbar.set_description("Saving parquet")
+        output_dir = resolve(config['output']['dir'])
+        os.makedirs(output_dir, exist_ok=True)
+        # Normalize engagement columns for script 2 (likes, reach, shares, comments)
+        for dst, src_candidates in [
+            ('likes', ['likes', 'Likes', 'Facebook Likes', 'X Likes']),
+            ('reach', ['reach', 'Reach (new)']),
+            ('shares', ['shares', 'Shares', 'Facebook Shares', 'Social Shares']),
+            ('comments', ['comments', 'Comments', 'Facebook Comments']),
+        ]:
+            if dst not in data.columns:
+                for c in src_candidates:
+                    if c in data.columns:
+                        data[dst] = pd.to_numeric(data[c], errors='coerce').fillna(0)
+                        break
+            if dst not in data.columns:
+                data[dst] = 0
+        # Keep only columns safe for parquet (avoids PyArrow "Repetition level histogram" errors)
+        keep = [config['input']['timestamp_column'], config['input']['text_column'],
+                'cluster', 'umap_x', 'umap_y', 'cluster_label', 'cluster_size',
+                'likes', 'reach', 'shares', 'comments', 'Author', 'Sentiment', 'sentiment']
+        keep = [c for c in keep if c in data.columns]
+        out_df = data[keep].copy()
+        for col in out_df.select_dtypes(include=['object']).columns:
+            out_df[col] = out_df[col].astype(str)
+        out_df.to_parquet(output_path, index=False)
+        pbar.update(1)
+        pbar.set_postfix_str(f"→ {output_path}")
+
     print(f"Saved {len(data)} rows to {output_path}")
 
 
 if __name__ == '__main__':
+    _set_numba_threads()
     main()

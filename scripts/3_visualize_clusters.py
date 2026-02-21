@@ -188,11 +188,12 @@ def volatility_dashboard(temporal_df, out_path):
         marker_color='steelblue',
     ), row=2, col=1)
 
-    # Panel 4: Lifecycle pie
-    fig.add_trace(go.Pie(
-        labels=lifecycle_counts['lifecycle_state'],
-        values=lifecycle_counts['count'],
+    # Panel 4: Lifecycle distribution (bar; pie not compatible with make_subplots xy)
+    fig.add_trace(go.Bar(
+        x=lifecycle_counts['lifecycle_state'],
+        y=lifecycle_counts['count'],
         name='Lifecycle',
+        marker_color='teal',
     ), row=2, col=2)
 
     fig.update_layout(

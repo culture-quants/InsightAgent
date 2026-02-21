@@ -67,6 +67,9 @@ def compute_sentiment_distribution(group, sentiment_col):
 
 def run_temporal_analysis(df, window, config):
     ts_col = config['input']['timestamp_column']
+    # Pandas 2.2+: 'M' deprecated for month-end, use 'ME'
+    if window == '1M':
+        window = '1ME'
     df[ts_col] = pd.to_datetime(df[ts_col], errors='coerce')
     df = df.dropna(subset=[ts_col])
     df = df.set_index(ts_col)
@@ -99,7 +102,7 @@ def run_temporal_analysis(df, window, config):
         resampled = cdf.resample(window).agg(
             post_count=('cluster', 'count'),
             unique_authors=('Author', 'nunique') if 'Author' in cdf.columns else ('cluster', 'count'),
-            total_likes=(engagement_cols.get('likes', 'likes'), 'sum') if 'likes' in cdf.columns else ('cluster', 'count'),
+            total_likes=('likes', 'sum') if 'likes' in cdf.columns else ('cluster', 'count'),
             total_reach=('reach', 'sum') if 'reach' in cdf.columns else ('cluster', 'count'),
             total_shares=('shares', 'sum') if 'shares' in cdf.columns else ('cluster', 'count'),
             total_comments=('comments', 'sum') if 'comments' in cdf.columns else ('cluster', 'count'),
@@ -141,6 +144,47 @@ def run_temporal_analysis(df, window, config):
     return temporal_df
 
 
+def build_frontend_snapshots(temporal_df):
+    """Create a frontend-oriented snapshot table from temporal stats."""
+    columns = [
+        "time_window",
+        "cluster",
+        "cluster_label",
+        "post_count",
+        "market_share",
+        "volume_pct_change",
+        "volume_volatility",
+        "momentum",
+        "lifecycle_state",
+        "anomaly_score",
+    ]
+    snapshots = temporal_df.copy()
+    for col in columns:
+        if col not in snapshots.columns:
+            snapshots[col] = np.nan
+    snapshots = snapshots[columns].copy()
+    snapshots["time_window"] = pd.to_datetime(snapshots["time_window"], errors="coerce")
+    snapshots = snapshots.dropna(subset=["time_window"])
+    snapshots = snapshots.sort_values(["time_window", "cluster"]).reset_index(drop=True)
+    return snapshots
+
+
+def _read_clusters_parquet(path):
+    """Read clusters.parquet; avoid PyArrow 'Repetition level histogram' errors."""
+    try:
+        return pd.read_parquet(path)
+    except OSError as e:
+        if "histogram" in str(e) or "Repetition" in str(e) or "mismatch" in str(e).lower():
+            try:
+                import pyarrow.parquet as pq
+                table = pq.read_table(path, use_legacy_dataset=True)
+                return table.to_pandas()
+            except Exception as e2:
+                raise RuntimeError(
+                    f"Could not read parquet (tried legacy reader): {e2}"
+                ) from e
+        raise
+
 def main():
     parser = argparse.ArgumentParser(description="Temporal topic analysis")
     parser.add_argument('--config', default='config.yaml')
@@ -148,33 +192,50 @@ def main():
     parser.add_argument('--force', action='store_true')
     args = parser.parse_args()
 
-    config = load_config(args.config)
-    window = args.window or config['temporal']['default_window']
+    config_path = os.path.abspath(args.config)
+    config = load_config(config_path)
+    config_dir = os.path.dirname(config_path)
+    def resolve(p):
+        return p if os.path.isabs(p) else os.path.join(config_dir, p)
 
-    stats_path = config['output']['temporal_stats']
-    events_path = config['output']['temporal_events']
+    window = args.window or config['temporal']['default_window']
+    stats_path = resolve(config['output']['temporal_stats'])
+    events_path = resolve(config['output']['temporal_events'])
+    snapshots_1m_path = resolve(
+        config['output'].get('cluster_trend_snapshots_1m', 'output/cluster_trend_snapshots_1M.parquet')
+    )
+    snapshots_1m_csv_path = resolve(
+        config['output'].get('cluster_trend_snapshots_1m_csv', 'output/cluster_trend_snapshots_1M.csv')
+    )
+    clusters_path = resolve(config['output']['clusters'])
 
     if os.path.exists(stats_path) and not args.force:
         print(f"Output exists: {stats_path} (use --force to rerun)")
         sys.exit(0)
 
-    clusters_path = config['output']['clusters']
     if not os.path.exists(clusters_path):
         print(f"ERROR: clusters.parquet not found at {clusters_path}. Run script 1 first.")
         sys.exit(1)
 
-    df = pd.read_parquet(clusters_path)
+    df = _read_clusters_parquet(clusters_path)
     print(f"Loaded {len(df)} rows from {clusters_path}")
 
     temporal_df = run_temporal_analysis(df, window, config)
     events_df = detect_events(temporal_df)
+    monthly_temporal_df = run_temporal_analysis(df.copy(), '1M', config)
+    monthly_snapshots = build_frontend_snapshots(monthly_temporal_df)
 
-    os.makedirs(config['output']['dir'], exist_ok=True)
+    os.makedirs(os.path.dirname(stats_path) or '.', exist_ok=True)
     temporal_df.to_parquet(stats_path, index=False)
     events_df.to_parquet(events_path, index=False)
+    os.makedirs(os.path.dirname(snapshots_1m_path) or '.', exist_ok=True)
+    monthly_snapshots.to_parquet(snapshots_1m_path, index=False)
+    monthly_snapshots.to_csv(snapshots_1m_csv_path, index=False)
 
     print(f"Saved temporal stats ({len(temporal_df)} rows) to {stats_path}")
     print(f"Saved {len(events_df)} events to {events_path}")
+    print(f"Saved monthly frontend snapshots ({len(monthly_snapshots)} rows) to {snapshots_1m_path}")
+    print(f"Saved monthly frontend snapshots CSV to {snapshots_1m_csv_path}")
 
     # Lifecycle summary
     lifecycle_counts = temporal_df.groupby('cluster')['lifecycle_state'].first().value_counts()
