@@ -1,0 +1,6 @@
+agent: claude-sonnet-4-6
+branch: topic-analysis/design
+worktree: .worktrees/topic-analysis-design
+task: Implement temporal topic analysis pipeline from design doc
+design_doc: docs/plans/2026-02-21-temporal-topic-analysis-design.md
+assigned: 2026-02-21
